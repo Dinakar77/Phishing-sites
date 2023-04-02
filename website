@@ -1,0 +1,64 @@
+import streamlit as st
+import machine_learning as ml
+import feature_extraction as fe
+from bs4 import BeautifulSoup
+import requests as re
+import matplotlib.pyplot as plt
+
+st.title('Welcome to the Phishing Detection Application')
+
+st.write('This ML-based app is developed for educational purposes. '
+         'The objective of the app is detecting phishing websites only using content data, '
+         'not the URL! '
+         'You can see the details of the approach, dataset, feature, and results if '
+         'you click on "Project Details".')
+
+st.table(ml.df_results)
+
+st.write('SVM --> Support Vector Machine')
+st.write('DT --> Decision Tree')
+st.write('RF --> Random Forest')
+st.write('KN --> K-Neighbours')
+
+choice = st.selectbox("Please select your machine learning model",
+                      [
+                               'Support Naive Bayes',
+                               'Decision Tree',
+                               'Random Forest',
+                               'K-Neighbours'
+                            
+                      ]
+                      )
+
+if choice == 'Support Naive Bayes':
+    model = ml.svm_model
+    st.write('SVM model is selected!')
+elif choice == 'Decision Tree':
+     model = ml.dt_model
+     st.write('DT model is selected!')
+elif choice == 'Random Forest':
+     model = ml.rf_model
+     st.write('RF model is selected!')
+else:
+    model = ml.kn_model
+    st.write('K-Neighbours model is selected!')
+
+url = st.text_input('Enter the URL')
+
+if st.button('Check!'):
+    try:
+        response = re.get(url, verify=False, timeout=4)
+        if response.status_code !=200:
+            st.write("HTTP connection is not successful for the URL:", url)
+        else:
+            Soup = BeautifulSoup(response.content, "html.parser")
+            vector = [fe.create_vector(Soup)]
+            result = model.predict(vector)
+
+            if result[0] == 0:
+                st.success("This web page seems legitimate!")
+                st.balloons()
+            else:
+                st.warning('Attention! This web page is a potential PHISHING!')
+except re.exceptions.RequestException as e:
+    print("-->", e)
